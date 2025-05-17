@@ -1,5 +1,5 @@
 [project]
-name = "sqlp"
+name = "sqlclz"
 version = "0.0.0"
 requires-python = ">=3.10"
 description = "Python functions to build a SQL (sqlite3) statement"
@@ -28,10 +28,10 @@ dependencies = ["polars", "pandas", "argclz", "rich"]
 
 
 [project.urls]
-Homepage = "https://github.com/ytsimon2004/sqlp"
+Homepage = "https://github.com/ytsimon2004/sqlclz"
 #Documentation = ""
-Repository = "https://github.com/ytsimon2004/sqlp"
-Issues = "https://github.com/ytsimon2004/sqlp/issues"
+Repository = "https://github.com/ytsimon2004/sqlclz"
+Issues = "https://github.com/ytsimon2004/sqlclz/issues"
 
 
 [build-system]

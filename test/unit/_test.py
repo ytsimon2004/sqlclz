@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 from typing import Optional, TypeVar
 
-from sqlp.connection import Connection
-from sqlp.stat import SqlStat
+from sqlclz.connection import Connection
+from sqlclz.stat import SqlStat
 
 __all__ = ['SqlTestCase']
 

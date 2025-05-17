@@ -6,7 +6,7 @@ wget https://www.sqlitetutorial.net/wp-content/uploads/2018/03/chinook.zip; unzi
 import datetime
 from typing import NamedTuple, Annotated, Optional
 
-from sqlp import named_tuple_table_class, foreign, PRIMARY
+from sqlclz import named_tuple_table_class, foreign, PRIMARY
 
 __all__ = ['Artists', 'Genres', 'MediaTypes', 'Albums', 'Tracks', 'Employees', 'Customers', 'Invoices', 'Invoice_Items']
 

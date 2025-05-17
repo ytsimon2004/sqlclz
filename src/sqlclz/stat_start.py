@@ -300,7 +300,7 @@ def insert_into(*args, policy: UPDATE_POLICY = None, named=False) -> SqlInsertSt
 
     * `WITH [RECURSIVE]`
 
-    :param table:
+    :param args:
     :param policy:
     :param named:
     :return:

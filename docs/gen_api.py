@@ -4,7 +4,7 @@ import textwrap
 from pathlib import Path
 
 # === Configuration ===
-SRC = Path('../src/sqlp').resolve()
+SRC = Path('../src/sqlclz').resolve()
 DST = Path('source/api')
 DST.mkdir(parents=True, exist_ok=True)
 

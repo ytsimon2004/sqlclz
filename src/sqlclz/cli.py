@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Optional, Literal, TYPE_CHECKING
 
 import polars as pl
+
 from argclz import AbstractParser, argument
 
 if TYPE_CHECKING:
@@ -50,7 +51,7 @@ class Database(metaclass=abc.ABCMeta):
     A class for the common usage of using sqlite.
     """
 
-    sqlp_debug_mode = False
+    sqlclz_debug_mode = False
 
     @property
     @abc.abstractmethod
@@ -74,7 +75,7 @@ class Database(metaclass=abc.ABCMeta):
             database_file.parent.mkdir(exist_ok=True)
 
         from .connection import Connection
-        ret = Connection(database_file, debug=self.sqlp_debug_mode)
+        ret = Connection(database_file, debug=self.sqlclz_debug_mode)
         cls = type(self)
         if getattr(cls, '__first_connect_init', True):
             from .stat_start import create_table
@@ -92,7 +93,7 @@ class CliDatabase(Database, AbstractParser):
     Wrap Database to support commandline interface.
     """
 
-    sqlp_debug_mode: bool = argument('--debug')
+    sqlclz_debug_mode: bool = argument('--debug')
 
     DB_FILE: str = argument('-d', '--database', metavar='FILE', default=None)
     DB_STAT: list[str] = argument(metavar='STATS', nargs='*', action='extend')
@@ -129,7 +130,7 @@ class CliDatabase(Database, AbstractParser):
 
     def open_connection(self) -> Connection:
         if self.database is not None:
-            self.database.sqlp_debug_mode = self.sqlp_debug_mode
+            self.database.sqlclz_debug_mode = self.sqlclz_debug_mode
             return self.database.open_connection()
         return super().open_connection()
 
