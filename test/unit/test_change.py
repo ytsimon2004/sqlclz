@@ -3,9 +3,9 @@ import unittest
 from pathlib import Path
 from typing import Annotated, NamedTuple, Optional, Union, TypeVar
 
-import sqlp
-from sqlp import Connection
-from sqlp.stat import SqlStat, Cursor
+import sqlclz
+from sqlclz import Connection
+from sqlclz.stat import SqlStat, Cursor
 from ._test import SqlTestCase
 from ._tracks import *
 
@@ -79,27 +79,27 @@ class InsertTest(ChangeTest):
         ORDER BY
             ArtistId DESC
         LIMIT 1;
-        """, sqlp.select_from(Artists.ArtistId, Artists.Name).order_by(sqlp.desc(Artists.ArtistId)).limit(n))
+        """, sqlclz.select_from(Artists.ArtistId, Artists.Name).order_by(sqlclz.desc(Artists.ArtistId)).limit(n))
 
     def test_insert_one(self):
         self.assertSqlExeEqual("""\
         INSERT INTO artists (name)
         VALUES('Bud Powell');
-        """, sqlp.insert_into(Artists.Name).submit([('Bud Powell',)]))
+        """, sqlclz.insert_into(Artists.Name).submit([('Bud Powell',)]))
 
         self.assert_latest_artists(1)
 
     def test_insert_default(self):
         self.assertSqlExeEqual("""\
         INSERT INTO artists DEFAULT VALUES;
-        """, sqlp.insert_into(Artists).defaults())
+        """, sqlclz.insert_into(Artists).defaults())
 
         self.assert_latest_artists(1)
 
     def test_insert_from_select(self):
-        @sqlp.named_tuple_table_class
+        @sqlclz.named_tuple_table_class
         class ArtistsBackup(NamedTuple):
-            ArtistsId: Annotated[int, sqlp.PRIMARY(auto_increment=True)]
+            ArtistsId: Annotated[int, sqlclz.PRIMARY(auto_increment=True)]
             Name: str
 
         self.assertSqlExeEqual("""\
@@ -107,14 +107,14 @@ class InsertTest(ChangeTest):
            ArtistId INTEGER PRIMARY KEY AUTOINCREMENT,
            Name NVARCHAR
         );
-        """, sqlp.create_table(ArtistsBackup))
+        """, sqlclz.create_table(ArtistsBackup))
         self.assertSqlExeEqual("""\
         INSERT INTO ArtistsBackup 
         SELECT ArtistId, Name
         FROM artists;
-        """, sqlp.insert_into(ArtistsBackup).select_from(Artists.ArtistId, Artists.Name))
+        """, sqlclz.insert_into(ArtistsBackup).select_from(Artists.ArtistId, Artists.Name))
         self.assertSqlExeEqual("""SELECT * FROM ArtistsBackup;""",
-                               sqlp.select_from(ArtistsBackup))
+                               sqlclz.select_from(ArtistsBackup))
 
 
 class UpdateTest(ChangeTest):
@@ -125,7 +125,7 @@ class UpdateTest(ChangeTest):
         UPDATE employees
         SET lastname = 'Smith'
         WHERE employeeid = 3;
-        """, sqlp.update(Employees, Employees.LastName == 'Smith').where(Employees.EmployeeId == 3))
+        """, sqlclz.update(Employees, Employees.LastName == 'Smith').where(Employees.EmployeeId == 3))
 
         self.assertSqlExeEqual("""\
         SELECT
@@ -138,7 +138,7 @@ class UpdateTest(ChangeTest):
             employees
         WHERE
             employeeid = 3;
-        """, sqlp.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Title,
+        """, sqlclz.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Title,
                               Employees.Email).where(
             Employees.EmployeeId == 3
         ))
@@ -151,7 +151,7 @@ class UpdateTest(ChangeTest):
             postalcode = 'M5P 2N7'
         WHERE
             employeeid = 4;
-        """, sqlp.update(
+        """, sqlclz.update(
             Employees,
             Employees.City == 'Toronto',
             Employees.State == 'ON',
@@ -169,7 +169,7 @@ class UpdateTest(ChangeTest):
             employees
         WHERE
             employeeid = 4;
-        """, sqlp.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Title,
+        """, sqlclz.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Title,
                               Employees.Email).where(
             Employees.EmployeeId == 4
         ))
@@ -181,9 +181,9 @@ class UpdateTest(ChangeTest):
         SET email = LOWER( firstname || "." || lastname || "@chinookcorp.com" )
         ORDER BY firstname
         LIMIT 1;
-        """, sqlp.update(
+        """, sqlclz.update(
             Employees,
-            Employees.Email == sqlp.lower(sqlp.concat(Employees.FirstName, '.', Employees.LastName, '@chinookcorp.com'))
+            Employees.Email == sqlclz.lower(sqlclz.concat(Employees.FirstName, '.', Employees.LastName, '@chinookcorp.com'))
         ).order_by(Employees.FirstName).limit(1))
 
         self.assertSqlExeEqual("""
@@ -197,7 +197,7 @@ class UpdateTest(ChangeTest):
         ORDER BY
             firstname
         LIMIT 5;
-        """, sqlp.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Email).order_by(
+        """, sqlclz.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Email).order_by(
             Employees.FirstName).limit(5))
 
     def test_update_all(self):
@@ -206,9 +206,9 @@ class UpdateTest(ChangeTest):
         SET email = LOWER(
             firstname || "." || lastname || "@chinookcorp.com"
         );
-        """, sqlp.update(
+        """, sqlclz.update(
             Employees,
-            Employees.Email == sqlp.lower(sqlp.concat(Employees.FirstName, '.', Employees.LastName, '@chinookcorp.com'))
+            Employees.Email == sqlclz.lower(sqlclz.concat(Employees.FirstName, '.', Employees.LastName, '@chinookcorp.com'))
         ))
 
         self.assertSqlExeEqual("""
@@ -221,7 +221,7 @@ class UpdateTest(ChangeTest):
             employees
         ORDER BY
             firstname
-        """, sqlp.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Email).order_by(
+        """, sqlclz.select_from(Employees.EmployeeId, Employees.FirstName, Employees.LastName, Employees.Email).order_by(
             Employees.FirstName))
 
 
@@ -236,21 +236,21 @@ class UpdateFromTest(ChangeTest):
         cls.tmp_database = None
 
     def test_update_from(self):
-        @sqlp.named_tuple_table_class
+        @sqlclz.named_tuple_table_class
         class Inventory(NamedTuple):
-            item_id: Annotated[int, sqlp.PRIMARY]
+            item_id: Annotated[int, sqlclz.PRIMARY]
             item_name: str
             quantity: int
 
-        @sqlp.named_tuple_table_class
+        @sqlclz.named_tuple_table_class
         class Sales(NamedTuple):
-            sales_id: Annotated[Optional[int], sqlp.PRIMARY]
+            sales_id: Annotated[Optional[int], sqlclz.PRIMARY]
             item_id: Optional[int]
             quantity_sold: Optional[int]
 
             # sales_at: datetime.datetime
 
-            @sqlp.foreign(Inventory)
+            @sqlclz.foreign(Inventory)
             def _inventory(self):
                 return self.item_id
 
@@ -260,7 +260,7 @@ class UpdateFromTest(ChangeTest):
             item_name TEXT NOT NULL,
             quantity INTEGER NOT NULL
         );
-        """, sqlp.create_table(Inventory))
+        """, sqlclz.create_table(Inventory))
 
         self.assertSqlExeEqual("""\
         CREATE TABLE sales (
@@ -270,7 +270,7 @@ class UpdateFromTest(ChangeTest):
             -- sales_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (item_id) REFERENCES inventory (item_id)
         );
-        """, sqlp.create_table(Sales))
+        """, sqlclz.create_table(Sales))
 
         self.execute_both("""\
         INSERT INTO
@@ -290,8 +290,8 @@ class UpdateFromTest(ChangeTest):
           (3, 50);
         """)
 
-        daily = sqlp.select_from(
-            sqlp.sum(Sales.quantity_sold) @ 'qty',
+        daily = sqlclz.select_from(
+            sqlclz.sum(Sales.quantity_sold) @ 'qty',
             Sales.item_id,
             from_table=Sales
         ).group_by(Sales.item_id) @ 'daily'
@@ -312,7 +312,7 @@ class UpdateFromTest(ChangeTest):
           ) AS daily
         WHERE
           inventory.item_id = daily.item_id;
-        """, sqlp.update(
+        """, sqlclz.update(
             Inventory,
             Inventory.quantity == Inventory.quantity - daily.qty
         ).from_(daily).where(Inventory.item_id == daily.item_id))
@@ -327,25 +327,25 @@ class DeleteTest(ChangeTest):
         self.assertSqlExeEqual("""\
         DELETE FROM artists
         WHERE artistid = 1;
-        """, sqlp.delete_from(Artists).where(Artists.ArtistId == 1))
+        """, sqlclz.delete_from(Artists).where(Artists.ArtistId == 1))
         self.assertSqlExeEqual("""\
         SELECT artistid, name FROM artists WHERE artistid < 10;
-        """, sqlp.select_from(Artists.ArtistId, Artists.Name).where(Artists.ArtistId < 10))
+        """, sqlclz.select_from(Artists.ArtistId, Artists.Name).where(Artists.ArtistId < 10))
 
     def test_delete_by_pattern(self):
         self.assertSqlExeEqual("""\
         DELETE FROM artists
         WHERE name LIKE '%Santana%';
-        """, sqlp.delete_from(Artists).where(sqlp.like(Artists.Name, '%Santana%')))
+        """, sqlclz.delete_from(Artists).where(sqlclz.like(Artists.Name, '%Santana%')))
         self.assertSqlExeEqual("""\
         SELECT * FROM artists;
-        """, sqlp.select_from(Artists))
+        """, sqlclz.select_from(Artists))
 
 
-@sqlp.named_tuple_table_class
+@sqlclz.named_tuple_table_class
 class Positions(NamedTuple):
-    id: Annotated[int, sqlp.PRIMARY]
-    title: Annotated[str, sqlp.UNIQUE]
+    id: Annotated[int, sqlclz.PRIMARY]
+    title: Annotated[str, sqlclz.UNIQUE]
     min_salary: Optional[float]
 
 
@@ -379,13 +379,13 @@ class ReplaceTest(ChangeTest):
 
     def test_setup(self):
         self.assertSqlExeEqual("""SELECT * FROM positions;""",
-                               sqlp.select_from(Positions))
+                               sqlclz.select_from(Positions))
 
     def test_insert(self):
         self.assertSqlExeEqual("""\
         REPLACE INTO positions (title, min_salary)
         VALUES('Full Stack Developer', 140000);
-        """, sqlp.replace_into(Positions.title, Positions.min_salary).submit(
+        """, sqlclz.replace_into(Positions.title, Positions.min_salary).submit(
             [('Full Stack Developer', 140000)]
         ))
         self.assertSqlExeEqual("""\
@@ -393,13 +393,13 @@ class ReplaceTest(ChangeTest):
             *
         FROM
             positions;
-        """, sqlp.select_from(Positions))
+        """, sqlclz.select_from(Positions))
 
     def test_replace(self):
         self.assertSqlExeEqual("""\
         REPLACE INTO positions (title, min_salary)
         VALUES('DBA', 170000);
-        """, sqlp.replace_into(Positions.title, Positions.min_salary).submit(
+        """, sqlclz.replace_into(Positions.title, Positions.min_salary).submit(
             [('DBA', 170000)]
         ))
         self.assertSqlExeEqual("""\
@@ -407,13 +407,13 @@ class ReplaceTest(ChangeTest):
             *
         FROM
             positions;
-        """, sqlp.select_from(Positions))
+        """, sqlclz.select_from(Positions))
 
 
-@sqlp.named_tuple_table_class
+@sqlclz.named_tuple_table_class
 class SearchStats(NamedTuple):
-    id: Annotated[Optional[int], sqlp.PRIMARY]
-    keyword: Annotated[str, sqlp.UNIQUE]
+    id: Annotated[Optional[int], sqlclz.PRIMARY]
+    keyword: Annotated[str, sqlclz.UNIQUE]
     search_count: int = 1
 
 
@@ -445,12 +445,12 @@ class UpsertTest(ChangeTest):
         VALUES ('SQLite')
         ON CONFLICT (keyword)
         DO NOTHING;
-        """, sqlp.insert_into(SearchStats.keyword).on_conflict(
+        """, sqlclz.insert_into(SearchStats.keyword).on_conflict(
             SearchStats.keyword
         ).do_nothing(
         ).submit([('SQLite',)]))
         ret = self.assertSqlExeEqual("""SELECT * FROM SearchStats;""",
-                                     sqlp.select_from(SearchStats))
+                                     sqlclz.select_from(SearchStats))
         print(ret)
 
     def test_update(self):
@@ -461,17 +461,17 @@ class UpsertTest(ChangeTest):
         DO 
            UPDATE 
            SET search_count = search_count + 1;
-        """, sqlp.insert_into(SearchStats.keyword).on_conflict(
+        """, sqlclz.insert_into(SearchStats.keyword).on_conflict(
             SearchStats.keyword
         ).do_update(
             SearchStats.search_count == SearchStats.search_count + 1
         ).submit([('SQLite',)]))
         ret = self.assertSqlExeEqual("""SELECT * FROM SearchStats;""",
-                                     sqlp.select_from(SearchStats))
+                                     sqlclz.select_from(SearchStats))
         print(ret)
 
     def test_update_where(self):
-        excluded = sqlp.excluded(SearchStats)
+        excluded = sqlclz.excluded(SearchStats)
 
         self.assertSqlExeEqual("""\
         INSERT INTO SearchStats(keyword, search_count)
@@ -482,7 +482,7 @@ class UpsertTest(ChangeTest):
            SET search_count = excluded.search_count
         WHERE
             excluded.search_count > 0;
-        """, sqlp.insert_into(SearchStats.keyword, SearchStats.search_count).on_conflict(
+        """, sqlclz.insert_into(SearchStats.keyword, SearchStats.search_count).on_conflict(
             SearchStats.keyword
         ).do_update(
             SearchStats.search_count == excluded.search_count,
@@ -490,13 +490,13 @@ class UpsertTest(ChangeTest):
         ).submit([('SQLite', -1)]))
 
         ret = self.assertSqlExeEqual("""SELECT * FROM SearchStats;""",
-                                     sqlp.select_from(SearchStats))
+                                     sqlclz.select_from(SearchStats))
         print(ret)
 
 
-@sqlp.named_tuple_table_class
+@sqlclz.named_tuple_table_class
 class Books(NamedTuple):
-    id: Annotated[Optional[int], sqlp.PRIMARY]
+    id: Annotated[Optional[int], sqlclz.PRIMARY]
     title: str
     isbn: str
     # use str for testing
@@ -533,7 +533,7 @@ class ReturningTest(ChangeTest):
         INSERT INTO books(title, isbn, release_date)
         VALUES ('The Great Gatsby', '9780743273565', '1925-04-10')
         RETURNING id;
-        """, sqlp.insert_into(
+        """, sqlclz.insert_into(
             Books.title, Books.isbn, Books.release_date
         ).returning(Books.id).submit(
             [('The Great Gatsby', '9780743273565', '1925-04-10')]
@@ -546,11 +546,11 @@ class ReturningTest(ChangeTest):
         RETURNING 
            id AS book_id, 
            strftime('%Y', release_date) AS year;
-        """, sqlp.insert_into(
+        """, sqlclz.insert_into(
             Books.title, Books.isbn, Books.release_date
         ).returning(
             Books.id @ 'book_id',
-            sqlp.strftime('%Y', Books.release_date) @ 'year'
+            sqlclz.strftime('%Y', Books.release_date) @ 'year'
         ).submit(
             [('The Great Gatsby', '9780743273565', '1925-04-10')]
         ))
@@ -563,7 +563,7 @@ class ReturningTest(ChangeTest):
             --('Pride and Prejudice', '9780141439518', '1813-01-28'),
             ('The Lord of the Rings', '9780618640157', '1954-07-29')
         RETURNING *;
-        """, sqlp.insert_into(
+        """, sqlclz.insert_into(
             Books.title, Books.isbn, Books.release_date
         ).returning().submit([
             # ('Pride and Prejudice', '9780141439518', '1813-01-28'),
@@ -576,27 +576,27 @@ class ReturningTest(ChangeTest):
         SET isbn = '0141439512'
         WHERE id = 1
         RETURNING *;
-        """, sqlp.update(Books, Books.isbn == '0141439512').where(Books.id == 1).returning())
+        """, sqlclz.update(Books, Books.isbn == '0141439512').where(Books.id == 1).returning())
 
     def test_update_all_return(self):
         self.assertSqlExeEqual("""\
         UPDATE books
         SET title = UPPER(title)
         RETURNING *;
-        """, sqlp.update(Books, Books.title == sqlp.upper(Books.title)).returning())
+        """, sqlclz.update(Books, Books.title == sqlclz.upper(Books.title)).returning())
 
     def test_delete_return(self):
         self.assertSqlExeEqual("""\
         DELETE FROM books
         WHERE id = 1
         RETURNING *;
-        """, sqlp.delete_from(Books).where(Books.id == 1).returning())
+        """, sqlclz.delete_from(Books).where(Books.id == 1).returning())
 
     def test_delete_all_return(self):
         self.assertSqlExeEqual("""\
         DELETE FROM books
         RETURNING *;
-        """, sqlp.delete_from(Books).returning())
+        """, sqlclz.delete_from(Books).returning())
 
 
 if __name__ == '__main__':

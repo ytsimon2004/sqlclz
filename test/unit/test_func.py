@@ -1,12 +1,12 @@
 import unittest
 from typing import NamedTuple, Any, Optional
 
-import sqlp
+import sqlclz
 from ._test import SqlTestCase
 from ._tracks import *
 
 
-@sqlp.named_tuple_table_class
+@sqlclz.named_tuple_table_class
 class AvgTest(NamedTuple):
     val: Optional[Any]
 
@@ -20,7 +20,7 @@ class FuncAvgTest(SqlTestCase):
         super().setUpClass()
 
     def setUp(self):
-        sqlp.create_table(AvgTest).submit()
+        sqlclz.create_table(AvgTest).submit()
 
         self.connection.execute("""\
         INSERT INTO AvgTest (val)
@@ -38,7 +38,7 @@ class FuncAvgTest(SqlTestCase):
 
     def test_setup(self):
         ret = self.assertSqlExeEqual("""SELECT rowid, val FROM AvgTest;""",
-                                     sqlp.select_from(sqlp.ROWID, AvgTest.val))
+                                     sqlclz.select_from(sqlclz.ROWID, AvgTest.val))
         print(ret)
 
     def test_avg(self):
@@ -49,7 +49,7 @@ class FuncAvgTest(SqlTestCase):
             AvgTest
         WHERE
             rowid < 5;
-        """, sqlp.select_from(sqlp.avg(AvgTest.val)).where(sqlp.ROWID < 5))
+        """, sqlclz.select_from(sqlclz.avg(AvgTest.val)).where(sqlclz.ROWID < 5))
 
     def test_avg_on_null(self):
         self.assertSqlExeEqual("""\
@@ -57,7 +57,7 @@ class FuncAvgTest(SqlTestCase):
             avg(val)
         FROM
             AvgTest;
-        """, sqlp.select_from(sqlp.avg(AvgTest.val)))
+        """, sqlclz.select_from(sqlclz.avg(AvgTest.val)))
 
     def test_avg_distinct(self):
         self.assertSqlExeEqual("""\
@@ -65,7 +65,7 @@ class FuncAvgTest(SqlTestCase):
             avg(DISTINCT val)
         FROM
             AvgTest;
-        """, sqlp.select_from(sqlp.avg(AvgTest.val).distinct()))
+        """, sqlclz.select_from(sqlclz.avg(AvgTest.val).distinct()))
 
 
 class FuncAvgExampleTest(SqlTestCase):
@@ -77,7 +77,7 @@ class FuncAvgExampleTest(SqlTestCase):
             avg(milliseconds)
         FROM
             tracks;
-        """, sqlp.select_from(sqlp.avg(Tracks.Milliseconds)))
+        """, sqlclz.select_from(sqlclz.avg(Tracks.Milliseconds)))
 
     def test_avg_group_by(self):
         self.assertSqlExeEqual("""\
@@ -88,7 +88,7 @@ class FuncAvgExampleTest(SqlTestCase):
             tracks
         GROUP BY
             albumid;
-        """, sqlp.select_from(Tracks.AlbumId, sqlp.avg(Tracks.Milliseconds)).group_by(Tracks.AlbumId))
+        """, sqlclz.select_from(Tracks.AlbumId, sqlclz.avg(Tracks.Milliseconds)).group_by(Tracks.AlbumId))
 
     def test_avg_join(self):
         self.assertSqlExeEqual("""\
@@ -101,10 +101,10 @@ class FuncAvgExampleTest(SqlTestCase):
         INNER JOIN albums ON albums.AlbumId = tracks.albumid
         GROUP BY
             tracks.albumid;
-        """, sqlp.select_from(
+        """, sqlclz.select_from(
             Tracks.AlbumId,
             Albums.Title,
-            sqlp.round(sqlp.avg(Tracks.Milliseconds), 2) @ 'avg_length',
+            sqlclz.round(sqlclz.avg(Tracks.Milliseconds), 2) @ 'avg_length',
             from_table=Tracks
         ).join(Albums.AlbumId == Tracks.AlbumId, by='inner').group_by(Tracks.AlbumId))
 
@@ -121,21 +121,21 @@ class FuncAvgExampleTest(SqlTestCase):
             tracks.albumid
         HAVING
             avg_length BETWEEN 100000 AND 200000;
-        """, sqlp.select_from(
+        """, sqlclz.select_from(
             Tracks.AlbumId,
             Albums.Title,
-            (avg_length := sqlp.round(sqlp.avg(Tracks.Milliseconds), 2) @ 'avg_length'),
+            (avg_length := sqlclz.round(sqlclz.avg(Tracks.Milliseconds), 2) @ 'avg_length'),
             from_table=Tracks
         ).join(
             Albums.AlbumId == Tracks.AlbumId, by='inner'
         ).group_by(
             Tracks.AlbumId
         ).having(
-            sqlp.between(avg_length, 100000, 200000)
+            sqlclz.between(avg_length, 100000, 200000)
         ))
 
 
-@sqlp.named_tuple_table_class
+@sqlclz.named_tuple_table_class
 class CountTest(NamedTuple):
     c: Optional[int]
 
@@ -149,7 +149,7 @@ class FuncCountTest(SqlTestCase):
         super().setUpClass()
 
     def setUp(self):
-        sqlp.create_table(CountTest).submit()
+        sqlclz.create_table(CountTest).submit()
 
         self.connection.execute("""\
            INSERT INTO CountTest (c)
@@ -158,19 +158,19 @@ class FuncCountTest(SqlTestCase):
 
     def test_setup(self):
         self.assertSqlExeEqual("""SELECT * FROM CountTest;""",
-                               sqlp.select_from(CountTest))
+                               sqlclz.select_from(CountTest))
 
     def test_count_all(self):
         self.assertSqlExeEqual("""SELECT COUNT(*) FROM CountTest;""",
-                               sqlp.select_from(sqlp.count(), from_table=CountTest))
+                               sqlclz.select_from(sqlclz.count(), from_table=CountTest))
 
     def test_count_non_null(self):
         self.assertSqlExeEqual("""SELECT COUNT(c) FROM CountTest;""",
-                               sqlp.select_from(sqlp.count(CountTest.c)))
+                               sqlclz.select_from(sqlclz.count(CountTest.c)))
 
     def test_count_distinct(self):
         self.assertSqlExeEqual("""SELECT COUNT(DISTINCT c) FROM CountTest;""",
-                               sqlp.select_from(sqlp.count(CountTest.c).distinct()))
+                               sqlclz.select_from(sqlclz.count(CountTest.c).distinct()))
 
 
 class FuncCountExampleTest(SqlTestCase):
@@ -180,14 +180,14 @@ class FuncCountExampleTest(SqlTestCase):
         self.assertSqlExeEqual("""\
         SELECT count(*)
         FROM tracks;
-        """, sqlp.select_from(sqlp.count(), from_table=Tracks))
+        """, sqlclz.select_from(sqlclz.count(), from_table=Tracks))
 
     def test_count_where(self):
         self.assertSqlExeEqual("""\
         SELECT count(*)
         FROM tracks
         WHERE albumid = 10;
-        """, sqlp.select_from(sqlp.count(), from_table=Tracks).where(Tracks.AlbumId == 10))
+        """, sqlclz.select_from(sqlclz.count(), from_table=Tracks).where(Tracks.AlbumId == 10))
 
     def test_count_group_by(self):
         self.assertSqlExeEqual("""\
@@ -195,7 +195,7 @@ class FuncCountExampleTest(SqlTestCase):
         FROM tracks
         GROUP BY
             albumid;
-        """, sqlp.select_from(sqlp.count(), from_table=Tracks).group_by(Tracks.AlbumId))
+        """, sqlclz.select_from(sqlclz.count(), from_table=Tracks).group_by(Tracks.AlbumId))
 
     def test_count_having(self):
         self.assertSqlExeEqual("""\
@@ -206,10 +206,10 @@ class FuncCountExampleTest(SqlTestCase):
         GROUP BY
             albumid
         HAVING COUNT(*) > 25
-        """, sqlp.select_from(
-            Tracks.AlbumId, sqlp.count()
+        """, sqlclz.select_from(
+            Tracks.AlbumId, sqlclz.count()
         ).group_by(Tracks.AlbumId).having(
-            sqlp.count() > 25
+            sqlclz.count() > 25
         ))
 
     def test_count_join(self):
@@ -228,30 +228,30 @@ class FuncCountExampleTest(SqlTestCase):
             COUNT(*) > 25
         ORDER BY
             COUNT(*) DESC;
-        """, sqlp.select_from(
+        """, sqlclz.select_from(
             Tracks.AlbumId,
             Albums.Title,
-            sqlp.count()
+            sqlclz.count()
         ).join(
             Tracks.AlbumId == Albums.AlbumId, by='inner'
         ).group_by(
             Tracks.AlbumId
         ).having(
-            sqlp.count() > 25
+            sqlclz.count() > 25
         ).order_by(
-            sqlp.desc(sqlp.count())
+            sqlclz.desc(sqlclz.count())
         ))
 
     def test_count_distinct(self):
         self.assertSqlExeEqual("""\
         SELECT COUNT(title)
         FROM employees;
-        """, sqlp.select_from(sqlp.count(Employees.Title)))
+        """, sqlclz.select_from(sqlclz.count(Employees.Title)))
 
         self.assertSqlExeEqual("""\
         SELECT COUNT(DISTINCT title)
         FROM employees;
-        """, sqlp.select_from(sqlp.count(Employees.Title).distinct()))
+        """, sqlclz.select_from(sqlclz.count(Employees.Title).distinct()))
 
 
 class FuncMinMaxTest(SqlTestCase):
@@ -263,7 +263,7 @@ class FuncMinMaxTest(SqlTestCase):
     def test_max(self):
         self.assertSqlExeEqual("""\
         SELECT MAX(bytes) FROM tracks;
-        """, sqlp.select_from(sqlp.max(Tracks.Bytes)))
+        """, sqlclz.select_from(sqlclz.max(Tracks.Bytes)))
 
     def test_max_subquery(self):
         self.assertSqlExeEqual("""\
@@ -275,12 +275,12 @@ class FuncMinMaxTest(SqlTestCase):
             tracks
         WHERE
             Bytes = (SELECT MAX(Bytes) FROM tracks);
-        """, sqlp.select_from(
+        """, sqlclz.select_from(
             Tracks.TrackId,
             Tracks.Name,
             Tracks.Bytes
         ).where(
-            Tracks.Bytes == sqlp.select_from(sqlp.max(Tracks.Bytes))
+            Tracks.Bytes == sqlclz.select_from(sqlclz.max(Tracks.Bytes))
         ))
 
     def test_max_group_by(self):
@@ -292,7 +292,7 @@ class FuncMinMaxTest(SqlTestCase):
             tracks
         GROUP BY
             AlbumId;
-        """, sqlp.select_from(Tracks.AlbumId, sqlp.max(Tracks.Bytes)).group_by(Tracks.AlbumId))
+        """, sqlclz.select_from(Tracks.AlbumId, sqlclz.max(Tracks.Bytes)).group_by(Tracks.AlbumId))
 
     def test_max_having(self):
         self.assertSqlExeEqual("""\
@@ -304,10 +304,10 @@ class FuncMinMaxTest(SqlTestCase):
         GROUP BY
             AlbumId
         HAVING MAX(bytes) > 6000000;
-        """, sqlp.select_from(
-            Tracks.AlbumId, sqlp.max(Tracks.Bytes)
+        """, sqlclz.select_from(
+            Tracks.AlbumId, sqlclz.max(Tracks.Bytes)
         ).group_by(Tracks.AlbumId).having(
-            sqlp.max(Tracks.Bytes) > 6000000
+            sqlclz.max(Tracks.Bytes) > 6000000
         ))
 
 
@@ -322,7 +322,7 @@ class FuncSumTest(SqlTestCase):
            SUM(milliseconds)
         FROM
            tracks;
-        """, sqlp.select_from(sqlp.sum(Tracks.Milliseconds)))
+        """, sqlclz.select_from(sqlclz.sum(Tracks.Milliseconds)))
 
     def test_sum_group_by(self):
         self.assertSqlExeEqual("""\
@@ -333,7 +333,7 @@ class FuncSumTest(SqlTestCase):
             tracks
         GROUP BY
             AlbumId;
-        """, sqlp.select_from(Tracks.AlbumId, sqlp.sum(Tracks.Milliseconds)).group_by(Tracks.AlbumId))
+        """, sqlclz.select_from(Tracks.AlbumId, sqlclz.sum(Tracks.Milliseconds)).group_by(Tracks.AlbumId))
 
     def test_sum_join(self):
         self.assertSqlExeEqual("""\
@@ -347,8 +347,8 @@ class FuncSumTest(SqlTestCase):
         GROUP BY
            tracks.albumid, 
            title;
-        """, sqlp.select_from(
-            Tracks.AlbumId, Albums.Title, sqlp.sum(Tracks.Milliseconds)
+        """, sqlclz.select_from(
+            Tracks.AlbumId, Albums.Title, sqlclz.sum(Tracks.Milliseconds)
         ).join(Tracks._albums, by='inner').group_by(
             Tracks.AlbumId, Albums.Title
         ))
@@ -367,12 +367,12 @@ class FuncSumTest(SqlTestCase):
            title
         HAVING
            SUM(milliseconds) > 1000000;
-        """, sqlp.select_from(
-            Tracks.AlbumId, Albums.Title, sqlp.sum(Tracks.Milliseconds)
+        """, sqlclz.select_from(
+            Tracks.AlbumId, Albums.Title, sqlclz.sum(Tracks.Milliseconds)
         ).join(Tracks._albums, by='inner').group_by(
             Tracks.AlbumId, Albums.Title
         ).having(
-            sqlp.sum(Tracks.Milliseconds) > 1000000
+            sqlclz.sum(Tracks.Milliseconds) > 1000000
         ))
 
 

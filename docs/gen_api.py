@@ -50,7 +50,7 @@ CONTENT_DIR = """\
 """
 
 # Track generated .rst files and autosummary targets
-generated_rst_files = ['sqlp.rst']
+generated_rst_files = ['sqlclz.rst']
 autosummary_targets = []
 
 # Add source root for import resolution
