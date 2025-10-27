@@ -24,9 +24,9 @@ class PRIMARY(object):
     ...     a: Annotated[str, PRIMARY]  # style 1
     """
 
-    def __init__(self, order: typing.Literal['ASC', 'DESC'] = None,
-                 conflict: CONFLICT_POLICY = None,
-                 auto_increment=False):
+    def __init__(self, order: typing.Literal['ASC', 'DESC'] | None = None,
+                 conflict: CONFLICT_POLICY | None = None,
+                 auto_increment: bool = False):
         self.order = order
         self.conflict = conflict
         self.auto_increment = auto_increment

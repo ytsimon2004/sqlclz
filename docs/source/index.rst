@@ -1,4 +1,4 @@
-Welcome to SQLP documentation!
+Welcome to SQLCLZ documentation!
 ====================================
 
 
@@ -11,4 +11,4 @@ API Reference
    :caption: Packages
 
 
-   api/sqlp.rst
+   api/sqlclz.rst

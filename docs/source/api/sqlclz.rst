@@ -1,4 +1,4 @@
-sqlp package
+sqlclz package
 ==================
 
 .. toctree::

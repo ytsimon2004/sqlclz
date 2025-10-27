@@ -37,7 +37,7 @@ def select_from(table: SqlCteExpr, *, distinct: bool = False) -> SqlSelectStat[t
 
 @overload
 def select_from(*field, distinct: bool = False,
-                from_table: Union[str, type, SqlAlias, SqlSelectStat] = None) -> SqlSelectStat[tuple]:
+                from_table: str | type | SqlAlias | SqlSelectStat | None = None) -> SqlSelectStat[tuple]:
     """
     >>> select_from('a', 'b') # SELECT a, b FROM Table
     """
@@ -45,7 +45,7 @@ def select_from(*field, distinct: bool = False,
 
 
 def select_from(*args, distinct: bool = False,
-                from_table: Union[str, type, SqlAlias, SqlSelectStat] = None) -> SqlSelectStat:
+                from_table: str | type | SqlAlias | SqlSelectStat | None = None) -> SqlSelectStat:
     """
     ``SELECT``: https://www.sqlite.org/lang_select.html
 

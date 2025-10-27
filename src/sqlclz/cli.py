@@ -6,7 +6,7 @@ import re
 import sqlite3
 import sys
 from pathlib import Path
-from typing import Optional, Literal, TYPE_CHECKING
+from typing import Literal, TYPE_CHECKING
 
 import polars as pl
 
@@ -55,7 +55,7 @@ class Database(metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def database_file(self) -> Optional[Path]:
+    def database_file(self) -> Path | None:
         """sqlite database filepath"""
         pass
 
@@ -110,12 +110,12 @@ class CliDatabase(Database, AbstractParser):
 %(prog)s -d FILE --action=(import|export) --table NAME FILE
 """
 
-    def __init__(self, database: Optional[Database] = None):
+    def __init__(self, database: Database | None = None):
         Database.__init__(self)
         self.database = database
 
     @property
-    def database_file(self) -> Optional[Path]:
+    def database_file(self) -> Path | None:
         if self.database is not None:
             return self.database.database_file
         if self.DB_FILE is None:

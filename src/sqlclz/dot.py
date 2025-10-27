@@ -1,7 +1,7 @@
 import subprocess
 import sys
 from pathlib import Path
-from typing import overload, IO, Any, Union
+from typing import overload, IO, Any, Union, get_args
 
 from .cli import Database
 from .table import table_class, table_name, Table
@@ -129,7 +129,14 @@ def _generate_dot_table(db: Database, file=sys.stdout):
                 at.append('!')
             at.append(field.name)
             at.append(':')
-            at.append(field.sql_type.__name__)
+
+            if hasattr(field.sql_type, '__name__'):
+                at.append(field.sql_type.__name__)
+            else:
+                type_args = get_args(field.sql_type)
+                type_names = [t.__name__ if hasattr(t, '__name__') else str(t) for t in type_args]
+                at.append('|'.join(type_names))
+
             if not field.not_null:
                 at.append('?')
             ff.append(''.join(at))
