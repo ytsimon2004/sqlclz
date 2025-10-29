@@ -27,6 +27,9 @@ classifiers = [
 dependencies = ["polars", "pandas", "argclz", "rich"]
 
 
+[project.optional-dependencies]
+opt = ["diagram"]
+
 [project.urls]
 Homepage = "https://github.com/ytsimon2004/sqlclz"
 #Documentation = ""

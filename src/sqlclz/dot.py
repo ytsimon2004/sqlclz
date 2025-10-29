@@ -1,7 +1,7 @@
 import subprocess
 import sys
 from pathlib import Path
-from typing import overload, IO, Any, Union, get_args
+from typing import overload, IO, Any, get_args
 
 from .cli import Database
 from .table import table_class, table_name, Table
@@ -18,7 +18,7 @@ def generate_dot(db: Database, *,
 
 
 @overload
-def generate_dot(db: Database, file: Union[str, Path], *,
+def generate_dot(db: Database, file: str | Path, *,
                  graph: dict[str, Any] = None,
                  node: dict[str, Any] = None,
                  edge: dict[str, Any] = None) -> None:
@@ -152,7 +152,8 @@ def _generate_dot_table(db: Database, file=sys.stdout):
                 print(table_name(foreign.table), ':0', '->', table_name(foreign.foreign_table), ':0', file=file)
 
             elif len(foreign.fields) == 1:
-                print(table_name(foreign.table), ':', foreign.fields[0], '->', table_name(foreign.foreign_table), ':', foreign.foreign_fields[0], file=file)
+                print(table_name(foreign.table), ':', foreign.fields[0], '->', table_name(foreign.foreign_table), ':',
+                      foreign.foreign_fields[0], file=file)
 
             else:
                 k1 = ', '.join(foreign.fields)
